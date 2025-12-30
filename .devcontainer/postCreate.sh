@@ -8,12 +8,6 @@ if [[ ! -f "${ROOT}/.env" ]]; then
   cp "${ROOT}/.env.example" "${ROOT}/.env"
 fi
 
-echo "==> Installing Composer dependencies"
-composer install --no-interaction --prefer-dist
-
-echo "==> Generating app key (if missing)"
-php artisan key:generate --force --no-interaction
-
 echo "==> Creating SQLite database files"
 mkdir -p "${ROOT}/database"
 touch "${ROOT}/database/database.sqlite"
@@ -46,6 +40,12 @@ set_kv("SANDBOX_DB_DATABASE", str(root / "database" / "sandbox.sqlite"))
 
 env_path.write_text(text)
 PY
+
+echo "==> Installing Composer dependencies"
+composer install --no-interaction --prefer-dist
+
+echo "==> Generating app key (if missing)"
+php artisan key:generate --force --no-interaction
 
 echo "==> Running migrations (app + settings)"
 php artisan migrate --force --no-interaction

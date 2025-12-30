@@ -13,22 +13,30 @@ class EmailSettingsServiceProvider extends ServiceProvider
         // Standard-Fallbacks
         $this->setDefaultMailConfiguration();
 
-        // Check if settings exists
-        if (Schema::hasTable('settings')) {
-            try {
-                $settings = app(EmailSettings::class);
-
-                // Using values from database
-                Config::set('mail.mailers.smtp.host', $settings->smtp_host ?? Config::get('mail.mailers.smtp.host'));
-                Config::set('mail.mailers.smtp.port', $settings->smtp_port ?? Config::get('mail.mailers.smtp.port'));
-                Config::set('mail.mailers.smtp.encryption', $settings->smtp_encryption ?? Config::get('mail.mailers.smtp.encryption'));
-                Config::set('mail.mailers.smtp.username', $settings->smtp_username ?? Config::get('mail.mailers.smtp.username'));
-                Config::set('mail.mailers.smtp.password', isset($settings->smtp_password) ? decrypt($settings->smtp_password) : Config::get('mail.mailers.smtp.password'));
-                Config::set('mail.from.address', $settings->from_address ?? Config::get('mail.from.address'));
-                Config::set('mail.from.name', $settings->from_name ?? Config::get('mail.from.name'));
-            } catch (\Exception $e) {
-                \Log::error('Failed to load email settings from database: ' . $e->getMessage());
+        // Avoid hard failures during install / package discovery when the DB
+        // connection isn't configured yet (e.g. Codespaces first boot).
+        try {
+            if (!Schema::hasTable('settings')) {
+                return;
             }
+        } catch (\Throwable $e) {
+            // Silently keep default mail config.
+            return;
+        }
+
+        try {
+            $settings = app(EmailSettings::class);
+
+            // Using values from database
+            Config::set('mail.mailers.smtp.host', $settings->smtp_host ?? Config::get('mail.mailers.smtp.host'));
+            Config::set('mail.mailers.smtp.port', $settings->smtp_port ?? Config::get('mail.mailers.smtp.port'));
+            Config::set('mail.mailers.smtp.encryption', $settings->smtp_encryption ?? Config::get('mail.mailers.smtp.encryption'));
+            Config::set('mail.mailers.smtp.username', $settings->smtp_username ?? Config::get('mail.mailers.smtp.username'));
+            Config::set('mail.mailers.smtp.password', isset($settings->smtp_password) ? decrypt($settings->smtp_password) : Config::get('mail.mailers.smtp.password'));
+            Config::set('mail.from.address', $settings->from_address ?? Config::get('mail.from.address'));
+            Config::set('mail.from.name', $settings->from_name ?? Config::get('mail.from.name'));
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to load email settings from database: ' . $e->getMessage());
         }
     }
 
