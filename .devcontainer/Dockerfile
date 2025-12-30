@@ -6,8 +6,13 @@ FROM mcr.microsoft.com/devcontainers/php:1-8.2-bookworm
 # - zip (openspout/spatie backup)
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
+    autoconf \
+    g++ \
     libicu-dev \
     libzip-dev \
+    make \
+    pkg-config \
+    zlib1g-dev \
     zip \
     unzip \
   && docker-php-ext-configure intl \
