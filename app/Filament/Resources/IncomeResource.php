@@ -6,6 +6,7 @@ use App\Filament\Pages\Widgets\PaymentOverview;
 use App\Filament\Resources\IncomeResource\Pages;
 use App\Models\Income;
 use App\Models\IncomeCategory;
+use App\Support\Money;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -74,7 +75,7 @@ class IncomeResource extends Resource
                 Forms\Components\TextInput::make('amount')
                     ->label('Amount')
                     ->numeric(2, ',', '.')
-                    ->suffix('€')
+                    ->suffix(fn() => Money::currencyCode())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->maxLength(255),
@@ -100,9 +101,8 @@ class IncomeResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount')
-                    ->numeric(2, ',', '.')
                     ->alignEnd()
-                    ->suffix(' €'),
+                    ->formatStateUsing(fn($state) => Money::format($state)),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

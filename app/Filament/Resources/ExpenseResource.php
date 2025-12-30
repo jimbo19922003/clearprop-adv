@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ExpenseResource\Pages;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
+use App\Support\Money;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -47,7 +48,7 @@ class ExpenseResource extends Resource
                 Forms\Components\TextInput::make('amount')
                     ->label('Amount')
                     ->numeric(2, ',', '.')
-                    ->suffix('€')
+                    ->suffix(fn() => Money::currencyCode())
                     ->required(),
                 Forms\Components\TextInput::make('description')
                     ->maxLength(255),
@@ -70,9 +71,8 @@ class ExpenseResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Amount')
-                    ->numeric(2, ',', '.')
                     ->sortable()
-                    ->suffix(' €')
+                    ->formatStateUsing(fn($state) => Money::format($state))
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PlaneResource\Pages;
 use App\Models\Plane;
+use App\Support\Money;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -66,7 +67,7 @@ class PlaneResource extends Resource
                     ->required()
                     ->step(0.01)
                     ->default(0)
-                    ->suffix(' €'),
+                    ->suffix(fn() => Money::currencyCode()),
 
                 Forms\Components\TextInput::make('instructor_price_per_minute')
                     ->label('Instructor price')
@@ -74,7 +75,7 @@ class PlaneResource extends Resource
                     ->required()
                     ->step(0.01)
                     ->default(0)
-                    ->suffix(' €'),
+                    ->suffix(fn() => Money::currencyCode()),
 
                 Forms\Components\Select::make('counter_type')
                     ->label('Counter Type')
@@ -112,13 +113,13 @@ class PlaneResource extends Resource
                 Tables\Columns\TextColumn::make('default_price_per_minute')
                     ->label('Base price')
                     ->searchable()
-                    ->suffix(' €')
+                    ->formatStateUsing(fn($state) => Money::format($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('instructor_price_per_minute')
                     ->label('Instructor price')
                     ->searchable()
-                    ->suffix(' €')
+                    ->formatStateUsing(fn($state) => Money::format($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('counter_type')

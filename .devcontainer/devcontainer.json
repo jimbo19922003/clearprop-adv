@@ -1,0 +1,22 @@
+{
+  "name": "Flight Club Partnership Portal (Laravel)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Laravel (php artisan serve)"
+    }
+  },
+  "remoteEnv": {
+    "XDEBUG_MODE": "off"
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}
+

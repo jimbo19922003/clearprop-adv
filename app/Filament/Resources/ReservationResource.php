@@ -8,8 +8,10 @@ use App\Models\Activity;
 use App\Models\Plane;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Services\PartnershipEntitlementService;
 use App\Services\ReservationValidator;
 use App\Services\StatisticsService;
+use App\Settings\PartnershipSettings;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -252,6 +254,7 @@ class ReservationResource extends Resource
     {
         $user = auth()->user();
         $settings = app(GeneralSettings::class);
+        $partnershipSettings = app(PartnershipSettings::class);
 
         $selectedAircraft = Plane::where('id', $data['plane_id'])->first();
         $reservationStartDate = Carbon::parse($data['reservation_start_date'])->toDateString();
@@ -292,6 +295,31 @@ class ReservationResource extends Resource
                 return false;
             }
 
+            // Share-based entitlements (owner partnership)
+            if ((bool) $partnershipSettings->enforce_share_entitlements) {
+                $picId = $data['user_id'] ?? $user->id;
+                $pic = User::find($picId);
+
+                if ($pic && $pic->is_member) {
+                    $entitlement = app(PartnershipEntitlementService::class)
+                        ->evaluate($pic, $reservationStartTime, $reservationStopTime, $bookingId);
+
+                    if (!$entitlement['ok']) {
+                        $lines = [];
+                        foreach ($entitlement['years'] as $y) {
+                            $lines[] = "{$y['year']}: requested W{$y['requested_weekend_days']}/H{$y['requested_holiday_days']}, remaining W{$y['remaining_weekend_days']}/H{$y['remaining_holiday_days']}.";
+                        }
+
+                        Notification::make()
+                            ->title('Share entitlement exceeded')
+                            ->body(implode("\n", $lines))
+                            ->danger()
+                            ->send();
+
+                        return false;
+                    }
+                }
+            }
         }
 
         return true;

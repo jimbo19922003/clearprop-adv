@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Settings\GeneralSettings;
+use App\Support\Money;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
@@ -55,7 +56,8 @@ class ManageGeneral extends SettingsPage
                             ->columnSpan(2),
                         Forms\Components\TextInput::make('check_balance_limit_amount')
                             ->label('')
-                            ->suffixIcon('heroicon-m-currency-euro')
+                            ->suffix(fn() => Money::currencyCode())
+                            ->suffixIcon('heroicon-m-banknotes')
                             ->numeric(2, ',', '.')
                             ->columnSpan(2),
                     ]),

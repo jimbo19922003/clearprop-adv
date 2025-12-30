@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\HtmlString;
+use App\Support\Money;
 
 class UserDataBalanceEmailNotification extends Notification
 {
@@ -43,7 +44,7 @@ class UserDataBalanceEmailNotification extends Notification
             ->subject(config('app.name') . ': Member ' . $this->data['name'] . ' has a negative balance')
             ->greeting('Hi,')
             ->line(new HtmlString('we would like to inform you that ' . '<strong>' . $this->data['name'] . '</strong>' . ' has a negative balance'))
-            ->line(new HtmlString('The actual balance is: ' . '<strong>' . '-' . $this->data['balance'] . ' € '. '</strong>'))
+            ->line(new HtmlString('The actual balance is: ' . '<strong>' . Money::format(-(float) $this->data['balance']) . '</strong>'))
             ->line('Please log in to see more information.')
             ->action(config('app.name'), config('app.url'))
             ->line('Thank you')

@@ -6,6 +6,7 @@ use App\Enums\PackageType;
 use App\Filament\Resources\PackageResource\Pages;
 use App\Models\Package;
 use App\Models\User;
+use App\Support\Money;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -74,7 +75,7 @@ class PackageResource extends Resource
                 TextInput::make('price')
                     ->label('Price')
                     ->numeric()
-                    ->suffix('€')
+                    ->suffix(fn() => Money::currencyCode())
                     ->required(),
 
                 TextInput::make('initial_minutes')
@@ -117,8 +118,7 @@ class PackageResource extends Resource
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
                     ->sortable()
-                    ->numeric(2, ',', '.')
-                    ->suffix(' €'),
+                    ->formatStateUsing(fn($state) => Money::format($state)),
 
                 Tables\Columns\TextColumn::make('initial_minutes')
                     ->label('Included')
