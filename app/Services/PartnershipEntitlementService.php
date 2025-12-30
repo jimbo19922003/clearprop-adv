@@ -75,6 +75,79 @@ class PartnershipEntitlementService
     }
 
     /**
+     * Preview/sandbox evaluation using an explicit configuration array.
+     *
+     * This is intended for UI previews where you want to see the impact of
+     * changing settings *before* saving them. It does not write any data.
+     *
+     * @param array{
+     *   annual_weekend_days_pool?: int,
+     *   annual_holiday_days_pool?: int,
+     *   holiday_dates?: array<int, string>,
+     *   count_unique_days?: bool,
+     *   allocation_rounding?: 'floor'|'round'|'ceil'
+     * } $config
+     */
+    public function evaluateWithConfig(
+        User $user,
+        Carbon $start,
+        Carbon $stop,
+        array $config,
+        ?int $excludeReservationId = null
+    ): array {
+        $cfg = $this->normalizeConfig($config);
+
+        $stopExclusive = $stop->copy();
+        if ($stopExclusive->lessThanOrEqualTo($start)) {
+            $stopExclusive = $start->copy()->addMinute();
+        }
+
+        $requestedByYear = $this->countDaysByYear(
+            $start,
+            $stopExclusive,
+            $cfg['holiday_dates'],
+            $cfg['count_unique_days'],
+        );
+
+        $resultYears = [];
+        $ok = true;
+
+        foreach ($requestedByYear as $year => $requested) {
+            $allowed = $this->allocateForUserWithConfig($user, (int) $year, $cfg);
+            $used = $this->usedByUserForYear(
+                $user,
+                (int) $year,
+                $cfg['holiday_dates'],
+                $excludeReservationId,
+                $cfg['count_unique_days'],
+            );
+
+            $remainingWeekend = max(0, $allowed['weekend'] - $used['weekend']);
+            $remainingHoliday = max(0, $allowed['holiday'] - $used['holiday']);
+
+            $yearOk = $requested['weekend'] <= $remainingWeekend && $requested['holiday'] <= $remainingHoliday;
+            $ok = $ok && $yearOk;
+
+            $resultYears[] = [
+                'year' => (int) $year,
+                'requested_weekend_days' => $requested['weekend'],
+                'requested_holiday_days' => $requested['holiday'],
+                'used_weekend_days' => $used['weekend'],
+                'used_holiday_days' => $used['holiday'],
+                'allowed_weekend_days' => $allowed['weekend'],
+                'allowed_holiday_days' => $allowed['holiday'],
+                'remaining_weekend_days' => $remainingWeekend,
+                'remaining_holiday_days' => $remainingHoliday,
+            ];
+        }
+
+        return [
+            'ok' => $ok,
+            'years' => $resultYears,
+        ];
+    }
+
+    /**
      * @return array{weekend:int, holiday:int}
      */
     private function allocateForUser(User $user, int $year): array
@@ -107,6 +180,86 @@ class PartnershipEntitlementService
         return [
             'weekend' => max(0, $round($weekendRaw)),
             'holiday' => max(0, $round($holidayRaw)),
+        ];
+    }
+
+    /**
+     * @param array{
+     *   annual_weekend_days_pool: int,
+     *   annual_holiday_days_pool: int,
+     *   holiday_dates: array<int, string>,
+     *   count_unique_days: bool,
+     *   allocation_rounding: 'floor'|'round'|'ceil'
+     * } $cfg
+     *
+     * @return array{weekend:int, holiday:int}
+     */
+    private function allocateForUserWithConfig(User $user, int $year, array $cfg): array
+    {
+        $userShare = (float) ($user->ownership_shares ?? 0);
+        if ($userShare <= 0) {
+            return ['weekend' => 0, 'holiday' => 0];
+        }
+
+        $totalShares = (float) User::query()
+            ->role(User::IS_MEMBER)
+            ->whereNull('deleted_at')
+            ->sum('ownership_shares');
+
+        if ($totalShares <= 0) {
+            return ['weekend' => 0, 'holiday' => 0];
+        }
+
+        $weekendRaw = ((int) $cfg['annual_weekend_days_pool']) * ($userShare / $totalShares);
+        $holidayRaw = ((int) $cfg['annual_holiday_days_pool']) * ($userShare / $totalShares);
+
+        $round = match ((string) $cfg['allocation_rounding']) {
+            'ceil' => fn(float $v) => (int) ceil($v),
+            'round' => fn(float $v) => (int) round($v),
+            default => fn(float $v) => (int) floor($v),
+        };
+
+        return [
+            'weekend' => max(0, $round($weekendRaw)),
+            'holiday' => max(0, $round($holidayRaw)),
+        ];
+    }
+
+    /**
+     * @param array{
+     *   annual_weekend_days_pool?: int,
+     *   annual_holiday_days_pool?: int,
+     *   holiday_dates?: array<int, string>,
+     *   count_unique_days?: bool,
+     *   allocation_rounding?: string
+     * } $config
+     *
+     * @return array{
+     *   annual_weekend_days_pool: int,
+     *   annual_holiday_days_pool: int,
+     *   holiday_dates: array<int, string>,
+     *   count_unique_days: bool,
+     *   allocation_rounding: 'floor'|'round'|'ceil'
+     * }
+     */
+    private function normalizeConfig(array $config): array
+    {
+        $settings = app(PartnershipSettings::class);
+
+        $rounding = (string)($config['allocation_rounding'] ?? $settings->allocation_rounding ?? 'floor');
+        if (!in_array($rounding, ['floor', 'round', 'ceil'], true)) {
+            $rounding = 'floor';
+        }
+
+        $holidayDates = $config['holiday_dates'] ?? $settings->holiday_dates ?? [];
+        $holidayDates = array_values(array_unique(array_map('strval', $holidayDates)));
+
+        return [
+            'annual_weekend_days_pool' => (int)($config['annual_weekend_days_pool'] ?? $settings->annual_weekend_days_pool ?? 0),
+            'annual_holiday_days_pool' => (int)($config['annual_holiday_days_pool'] ?? $settings->annual_holiday_days_pool ?? 0),
+            'holiday_dates' => $holidayDates,
+            'count_unique_days' => (bool)($config['count_unique_days'] ?? $settings->count_unique_days ?? true),
+            'allocation_rounding' => $rounding,
         ];
     }
 
