@@ -43,6 +43,19 @@ return [
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],
 
+        /*
+         * Isolated, throwaway database used by the /sandbox panel.
+         * This lets you interactively test the entire system without touching
+         * your real data.
+         */
+        'sqlite_sandbox' => [
+            'driver' => 'sqlite',
+            'url' => env('SANDBOX_DATABASE_URL'),
+            'database' => env('SANDBOX_DB_DATABASE', database_path('sandbox.sqlite')),
+            'prefix' => '',
+            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'dump'  => [

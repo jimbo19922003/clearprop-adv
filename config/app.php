@@ -174,6 +174,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
         App\Providers\Filament\AppPanelProvider::class,
+        App\Providers\Filament\SandboxPanelProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\EmailSettingsServiceProvider::class,
 
