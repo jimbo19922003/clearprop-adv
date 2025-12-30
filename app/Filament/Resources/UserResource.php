@@ -42,6 +42,13 @@ class UserResource extends Resource
                                     ->maxLength(255)
                                     ->columnSpanFull(),
 
+                                Forms\Components\TextInput::make('ownership_shares')
+                                    ->label('Ownership shares')
+                                    ->helperText('Used for share-based weekend/holiday entitlements in Partnership Settings.')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0),
+
                                 Forms\Components\DatePicker::make('medical_due')
                                     ->label(__('user.fields.medical_due'))
                                     ->native()

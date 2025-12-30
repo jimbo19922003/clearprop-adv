@@ -2,6 +2,7 @@
 
 use App\Settings\EmailSettings;
 use App\Settings\GeneralSettings;
+use App\Settings\PartnershipSettings;
 
 return [
 
@@ -12,6 +13,7 @@ return [
     'settings' => [
         GeneralSettings::class,
         EmailSettings::class,
+        PartnershipSettings::class,
     ],
 
     /*

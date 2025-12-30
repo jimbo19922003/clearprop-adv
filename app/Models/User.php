@@ -62,6 +62,7 @@ class User extends Authenticatable implements FilamentUser
         'license',
         'medical_due',
         'params',
+        'ownership_shares',
         'remember_token',
     ];
 
@@ -74,6 +75,7 @@ class User extends Authenticatable implements FilamentUser
             'medical_due' => 'date',
             'email_verified_at' => 'datetime',
             'privacy_confirmed_at' => 'datetime',
+            'ownership_shares' => 'float',
         ];
     }
 

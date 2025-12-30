@@ -3,6 +3,7 @@ namespace App\Filament\Pages\Widgets;
 
 use App\Models\Income;
 use App\Services\StatisticsService;
+use App\Support\Money;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Auth;
@@ -34,14 +35,14 @@ class PaymentOverview extends BaseWidget
         $color = $total >= 0 ? 'success' : 'warning';
 
         $stats = [
-            Stat::make(trans('panel.depositTotal'), number_format($total, 2, ',', '.') . ' €')
+            Stat::make(trans('panel.depositTotal'), Money::format($total))
                 ->color($color)
                 ->chart([0, 0]) // Falls du eine Chart-Logik hast, hier ergänzen
         ];
 
         if ($user && $user->is_admin) {
-            $stats[] = Stat::make('Deposit', number_format($sumDeposits, 2, ',', '.') . ' €');
-            $stats[] = Stat::make('Activity spending', number_format($sumActivities, 2, ',', '.') . ' €');
+            $stats[] = Stat::make('Deposit', Money::format($sumDeposits));
+            $stats[] = Stat::make('Activity spending', Money::format($sumActivities));
         }
 
         return $stats;

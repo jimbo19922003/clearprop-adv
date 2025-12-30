@@ -3,6 +3,7 @@ namespace App\Filament\Pages\Widgets;
 
 use App\Models\Income;
 use App\Services\StatisticsService;
+use App\Support\Money;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
@@ -38,17 +39,17 @@ class BalanceOverview extends BaseWidget
                 Tables\Columns\TextColumn::make('suminc')
                     ->label('Payments')
                     ->numeric()
-                    ->formatStateUsing(fn($state) => number_format($state, 2, ',', '.') . ' €'),
+                    ->formatStateUsing(fn($state) => Money::format($state)),
 
                 Tables\Columns\TextColumn::make('sumact')
                     ->label('Activity spending')
                     ->numeric()
-                    ->formatStateUsing(fn($state) => number_format($state, 2, ',', '.') . ' €'),
+                    ->formatStateUsing(fn($state) => Money::format($state)),
 
                 Tables\Columns\TextColumn::make('total')
                     ->label('Balance')
                     ->numeric()
-                    ->formatStateUsing(fn($state) => number_format($state, 2, ',', '.') . ' €'),
+                    ->formatStateUsing(fn($state) => Money::format($state)),
             ])
             ->filters([
                 Filter::make('Negative Balance')

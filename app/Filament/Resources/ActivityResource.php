@@ -9,6 +9,7 @@ use App\Models\Activity;
 use App\Models\Plane;
 use App\Models\User;
 use App\Services\ActivityCalculationService;
+use App\Support\Money;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Get;
@@ -153,7 +154,7 @@ class ActivityResource extends Resource
                             Forms\Components\Placeholder::make('amount')
                                 ->label(__('activities.total_price'))
                                 ->inlineLabel()
-                                ->content(fn(Get $get) => number_format((float)($get('amount') ?? 0), 2, ',', '.') . ' €'),
+                                ->content(fn(Get $get) => Money::format($get('amount') ?? 0)),
 
                             Forms\Components\Placeholder::make('pricing_logic')
                                 ->label(__('activities.pricing_logic'))
@@ -300,15 +301,13 @@ class ActivityResource extends Resource
 
                 Tables\Columns\TextColumn::make('amount')
                     ->label(__('activities.amount'))
-                    ->numeric(2, ',', '.')
                     ->alignEnd()
+                    ->formatStateUsing(fn($state) => Money::format($state))
                     ->summarize([
                         Tables\Columns\Summarizers\Sum::make()
                             ->label(__('activities.summarizer_amount'))
-                            ->numeric('2', ',', '.')
-                            ->suffix(' €')
+                            ->numeric('2', ',', '.'),
                     ])
-                    ->suffix(' €')
                     ->toggleable(isToggledHiddenByDefault: false),
 
                 Tables\Columns\TextColumn::make('created_at')
