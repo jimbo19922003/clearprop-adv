@@ -1,0 +1,17 @@
+{
+  "name": "Flight Club Partnership Portal (Laravel)",
+  "image": "mcr.microsoft.com/devcontainers/php:1-8.2-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "Laravel (php artisan serve)"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}
+
